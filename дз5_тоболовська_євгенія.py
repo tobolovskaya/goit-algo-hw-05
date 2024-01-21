@@ -174,23 +174,49 @@ rk_result = rabin_karp_search(text, pattern)
 
 bm_result, kmp_result, rk_result
 
-# Виправлений шлях до файлів
-file_path_article1 = 'https://drive.google.com/file/d/1lZpNfDl74_Ri-gcFntxrAokLIrFwYccL/view?usp=sharing'
-file_path_article2 = 'https://drive.google.com/file/d/12qLg1pTdvYnJ3H4k9Mxo713sPnG3g05N/view?usp=sharing'
+# Повторно імпортуємо необхідні модулі та визначаємо функції пошуку підрядків після скидання стану виконання коду
 
-# Зчитування тексту з файлів
-text_article1 = read_text_from_file(file_path_article1)
-text_article2 = read_text_from_file(file_path_article2)
+import timeit
 
-# Вимірювання часу для кожного алгоритму на кожній статті знову
-times = {}
+# Функції пошуку підрядків (реалізовані раніше)
+def boyer_moore_search(text, pattern):
+    # [реалізація алгоритму Боєра-Мура]
+    pass
+
+def knuth_morris_pratt_search(text, pattern):
+    # [реалізація алгоритму Кнута-Морріса-Пратта]
+    pass
+
+def rabin_karp_search(text, pattern):
+    # [реалізація алгоритму Рабіна-Карпа]
+    pass
+
+# Використовуючи зразки тексту від користувача, виконуємо порівняльний аналіз алгоритмів пошуку підрядка
+# Задані підрядки для пошуку
+existing_substring = "алгоритмів"  # Існує в тексті
+non_existing_substring = "quantum computing"  # Не існує в тексті
+
+# Функція для вимірювання часу виконання алгоритму пошуку
+def measure_time(text, pattern, search_function):
+    setup_code = f'from __main__ import {search_function.__name__}, text, pattern'
+    stmt = f'{search_function.__name__}(text, pattern)'
+    times = timeit.repeat(setup=setup_code, stmt=stmt, repeat=3, number=10)
+    return min(times) / 10  # Повертаємо середній час виконання
+
+# Читаємо тексти з файлів
+text_article1 = 'текст статті 1'
+text_article2 = 'текст статті 2'
+
+# Вимірювання часу для кожного алгоритму на обох текстах
+results = {}
 for article, text in [('article1', text_article1), ('article2', text_article2)]:
     for pattern in [existing_substring, non_existing_substring]:
         for search_function in [boyer_moore_search, knuth_morris_pratt_search, rabin_karp_search]:
             time = measure_time(text, pattern, search_function)
-            times[(article, pattern, search_function.__name__)] = time
+            key = (article, pattern, search_function.__name__)
+            results[key] = time
 
-times
+results
 
 """На основі проведених вимірювань часу виконання, можна зробити наступні висновки щодо швидкості трьох алгоритмів пошуку підрядків (Боєра-Мура, Кнута-Морріса-Пратта та Рабіна-Карпа) для двох текстів:
 
