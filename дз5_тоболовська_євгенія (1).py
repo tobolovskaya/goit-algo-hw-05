@@ -68,66 +68,108 @@ binary_search(sorted_array, target_value)
 Алгоритм Кнута-Морріса-Пратта (КМП)
 """
 
-def KMP_search(pattern, text):
-    # Реалізація КМП
-    pass
+def KMPSearch(pat, txt):
+    M = len(pat)
+    N = len(txt)
+    lps = [0]*M
+    j = 0 # index for pat[]
+    computeLPSArray(pat, M, lps)
+    i = 0 # index for txt[]
+    while i < N:
+        if pat[j] == txt[i]:
+            i += 1
+            j += 1
+        if j == M:
+            print("Found pattern at index " + str(i-j))
+            j = lps[j-1]
+        elif i < N and pat[j] != txt[i]:
+            if j != 0:
+                j = lps[j-1]
+            else:
+                i += 1
+
+def computeLPSArray(pat, M, lps):
+    len = 0 # length of the previous longest prefix suffix
+    lps[0] = 0 # lps[0] is always 0
+    i = 1
+    while i < M:
+        if pat[i]== pat[len]:
+            len += 1
+            lps[i] = len
+            i += 1
+        else:
+            if len != 0:
+                len = lps[len-1]
+            else:
+                lps[i] = 0
+                i += 1
 
 """Алгоритм Боєра-Мура"""
 
-def Boyer_Moore_search(pattern, text):
-    # Реалізація Боєра-Мура
-    pass
+def badCharHeuristic(string, size):
+    badChar = [-1]*256
+    for i in range(size):
+        badChar[ord(string[i])] = i;
+    return badChar
+
+def search(txt, pat):
+    m = len(pat)
+    n = len(txt)
+    badChar = badCharHeuristic(pat, m)
+    s = 0
+    while(s <= n-m):
+        j = m-1
+        while j>=0 and pat[j] == txt[s+j]:
+            j -= 1
+        if j<0:
+            print("Pattern occur at shift = {}".format(s))
+            s += (m-badChar[ord(txt[s+m])] if s+m<n else 1)
+        else:
+            s += max(1, j-badChar[ord(txt[s+j])])
 
 """Алгоритм Рабіна-Карпа"""
 
-def Rabin_Karp_search(pattern, text):
-    # Реалізація Рабіна-Карпа
-    pass
+def rabinKarp(pat, txt, q):
+    M = len(pat)
+    N = len(txt)
+    i = 0
+    j = 0
+    p = 0    # hash value for pattern
+    t = 0    # hash value for txt
+    h = 1
+    d = 256
+    for i in range(M-1):
+        h = (h*d)%q
+    for i in range(M):
+        p = (d*p + ord(pat[i]))%q
+        t = (d*t + ord(txt[i]))%q
+    for i in range(N-M+1):
+        if p==t:
+            for j in range(M):
+                if txt[i+j] != pat[j]:
+                    break
+            j+=1
+            if j==M:
+                print("Pattern found at index " + str(i))
+        if i < N-M:
+            t = (d*(t-ord(txt[i])*h) + ord(txt[i+M]))%q
+            if t < 0:
+                t = t+q
 
-"""Вимірювання часу виконання"""
-
-import timeit
-
-# Припустимо, text і pattern вже визначені
-setup = '''
-text = "Текстовий рядок..."
-pattern = "шуканий підрядок"
-from __main__ import KMP_search
-'''
-
-print(timeit.timeit('KMP_search(pattern, text)', setup=setup, number=1000))
-
-"""Зчитування тексту з файлів"""
-
-def read_text_from_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return file.read()
-
-text_article1 = read_text_from_file('path_to_article1.txt')
-text_article2 = read_text_from_file('path_to_article2.txt')
-
-"""Визначення підрядків для пошуку"""
-
-existing_substring = "існуючий підрядок"  # Існує в тексті
-non_existing_substring = "нісенітниця"  # Не існує в тексті
-
-"""Вимірювання часу виконання алгоритмів"""
+"""Вимірювання ефективності"""
 
 import timeit
 
-def measure_time(func, *args):
-    start_time = timeit.default_timer()
-    func(*args)
-    end_time = timeit.default_timer()
-    return end_time - start_time
+# Завантажте ваш текст
+text = "your_text_here"
+pattern1 = "existing_substring"
+pattern2 = "non_existing_substring"
 
-# Приклад вимірювання
-time_kmp_existing = measure_time(knuth_morris_pratt_search, text_article1, existing_substring)
-time_kmp_non_existing = measure_time(knuth_morris_pratt_search, text_article1, non_existing_substring)
+# Виміряйте час
+print(timeit.timeit(lambda: KMPSearch(pattern1, text), number=1000))
+print(timeit.timeit(lambda: KMPSearch(pattern2, text), number=1000))
 
-"""Висновки:
+"""Висновки
 
-На основі отриманих даних зробіть висновки щодо швидкостей алгоритмів для кожного тексту окремо та в цілому. Враховуйте, як алгоритми справляються з реальними та вигаданими підрядками.
-
-Ці кроки допоможуть вам організовано виконати завдання і надати звіт у відповідності до критеріїв прийняття. Врахуйте, що приклади коду вище є загальними шаблонами і потребують вашої адаптації до конкретних умов завдання та власних алгоритмів пошуку.
+Після аналізу даних ви зможете визначити, який алгоритм є найшвидшим для кожного виду текстів та підрядків. Врахуйте, що ефективність може відрізнятися в залежності від конкретних умов. Зробіть висновки у форматі Markdown, описуючи ваші спостереження та аналіз.
 """
