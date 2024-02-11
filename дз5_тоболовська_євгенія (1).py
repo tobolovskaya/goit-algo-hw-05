@@ -63,113 +63,174 @@ sorted_array = [0.5, 1.2, 1.5, 2.3, 3.6, 4.1, 5.8]
 target_value = 2.5
 binary_search(sorted_array, target_value)
 
-"""Завдання 3
+"""Завдання 3"""
 
-Алгоритм Кнута-Морріса-Пратта (КМП)
-"""
+def naive_search(main_string, pattern):
+    M = len(pattern)
+    N = len(main_string)
 
-def KMPSearch(pat, txt):
-    M = len(pat)
-    N = len(txt)
-    lps = [0]*M
-    j = 0 # index for pat[]
-    computeLPSArray(pat, M, lps)
-    i = 0 # index for txt[]
-    while i < N:
-        if pat[j] == txt[i]:
-            i += 1
+    # Перебір по символах головного рядка
+    for i in range(N - M + 1):
+        j = 0
+
+        # Перебір по символах підрядка
+        while j < M:
+            if main_string[i + j] != pattern[j]:
+                break
             j += 1
-        if j == M:
-            print("Found pattern at index " + str(i-j))
-            j = lps[j-1]
-        elif i < N and pat[j] != txt[i]:
-            if j != 0:
-                j = lps[j-1]
-            else:
-                i += 1
 
-def computeLPSArray(pat, M, lps):
-    len = 0 # length of the previous longest prefix suffix
-    lps[0] = 0 # lps[0] is always 0
+        # Якщо значення j дорівнює довжині підрядка, то підрядок знайдено
+        if j == M:
+            return i
+
+    return -1
+
+main_string = "ABABDABACDABABCABAB"
+pattern = "ABABCABAB"
+position = naive_search(main_string, pattern)
+
+if position != -1:
+    print(f"Підрядок знайдено на позиції {position}")
+else:
+    print("Підрядок не знайдено в головному рядку.")
+
+def compute_lps(pattern):
+    lps = [0] * len(pattern)
+    length = 0
     i = 1
-    while i < M:
-        if pat[i]== pat[len]:
-            len += 1
-            lps[i] = len
+
+    while i < len(pattern):
+        if pattern[i] == pattern[length]:
+            length += 1
+            lps[i] = length
             i += 1
         else:
-            if len != 0:
-                len = lps[len-1]
+            if length != 0:
+                length = lps[length - 1]
             else:
                 lps[i] = 0
                 i += 1
 
-"""Алгоритм Боєра-Мура"""
+    return lps
 
-def badCharHeuristic(string, size):
-    badChar = [-1]*256
-    for i in range(size):
-        badChar[ord(string[i])] = i;
-    return badChar
+def kmp_search(main_string, pattern):
+    M = len(pattern)
+    N = len(main_string)
 
-def search(txt, pat):
-    m = len(pat)
-    n = len(txt)
-    badChar = badCharHeuristic(pat, m)
-    s = 0
-    while(s <= n-m):
-        j = m-1
-        while j>=0 and pat[j] == txt[s+j]:
-            j -= 1
-        if j<0:
-            print("Pattern occur at shift = {}".format(s))
-            s += (m-badChar[ord(txt[s+m])] if s+m<n else 1)
+    lps = compute_lps(pattern)
+
+    i = j = 0
+
+    while i < N:
+        if pattern[j] == main_string[i]:
+            i += 1
+            j += 1
+        elif j != 0:
+            j = lps[j - 1]
         else:
-            s += max(1, j-badChar[ord(txt[s+j])])
+            i += 1
 
-"""Алгоритм Рабіна-Карпа"""
+        if j == M:
+            return i - j
 
-def rabinKarp(pat, txt, q):
-    M = len(pat)
-    N = len(txt)
-    i = 0
-    j = 0
-    p = 0    # hash value for pattern
-    t = 0    # hash value for txt
-    h = 1
-    d = 256
-    for i in range(M-1):
-        h = (h*d)%q
-    for i in range(M):
-        p = (d*p + ord(pat[i]))%q
-        t = (d*t + ord(txt[i]))%q
-    for i in range(N-M+1):
-        if p==t:
-            for j in range(M):
-                if txt[i+j] != pat[j]:
-                    break
-            j+=1
-            if j==M:
-                print("Pattern found at index " + str(i))
-        if i < N-M:
-            t = (d*(t-ord(txt[i])*h) + ord(txt[i+M]))%q
-            if t < 0:
-                t = t+q
+    return -1  # якщо підрядок не знайдено
 
-"""Вимірювання ефективності"""
+raw = "Цей алгоритм часто використовується в текстових редакторах та системах пошуку для ефективного знаходження підрядка в тексті."
 
-import timeit
+pattern = "алг"
 
-# Завантажте ваш текст
-text = "your_text_here"
-pattern1 = "existing_substring"
-pattern2 = "non_existing_substring"
+print(kmp_search(raw, pattern))
 
-# Виміряйте час
-print(timeit.timeit(lambda: KMPSearch(pattern1, text), number=1000))
-print(timeit.timeit(lambda: KMPSearch(pattern2, text), number=1000))
+def build_shift_table(pattern):
+    """Створити таблицю зсувів для алгоритму Боєра-Мура."""
+    table = {}
+    length = len(pattern)
+    # Для кожного символу в підрядку встановлюємо зсув рівний довжині підрядка
+    for index, char in enumerate(pattern[:-1]):
+        table[char] = length - index - 1
+    # Якщо символу немає в таблиці, зсув буде дорівнювати довжині підрядка
+    table.setdefault(pattern[-1], length)
+    return table
 
-"""Висновки
+def boyer_moore_search(text, pattern):
+    # Створюємо таблицю зсувів для патерну (підрядка)
+    shift_table = build_shift_table(pattern)
+    i = 0  # Ініціалізуємо початковий індекс для основного тексту
 
-Після аналізу даних ви зможете визначити, який алгоритм є найшвидшим для кожного виду текстів та підрядків. Врахуйте, що ефективність може відрізнятися в залежності від конкретних умов. Зробіть висновки у форматі Markdown, описуючи ваші спостереження та аналіз.
-"""
+    # Проходимо по основному тексту, порівнюючи з підрядком
+    while i <= len(text) - len(pattern):
+        j = len(pattern) - 1  # Починаємо з кінця підрядка
+
+        # Порівнюємо символи від кінця підрядка до його початку
+        while j >= 0 and text[i + j] == pattern[j]:
+            j -= 1  # Зсуваємось до початку підрядка
+
+        # Якщо весь підрядок збігається, повертаємо його позицію в тексті
+        if j < 0:
+            return i  # Підрядок знайдено
+
+        # Зсуваємо індекс i на основі таблиці зсувів
+        # Це дозволяє "перестрибувати" над неспівпадаючими частинами тексту
+        i += shift_table.get(text[i + len(pattern) - 1], len(pattern))
+
+    # Якщо підрядок не знайдено, повертаємо -1
+    return -1
+
+text = "Being a developer is not easy"
+pattern = "developer"
+
+position = boyer_moore_search(text, pattern)
+if position != -1:
+    print(f"Substring found at index {position}")
+else:
+    print("Substring not found")
+
+def polynomial_hash(s, base=256, modulus=101):
+    """
+    Повертає поліноміальний хеш рядка s.
+    """
+    n = len(s)
+    hash_value = 0
+    for i, char in enumerate(s):
+        power_of_base = pow(base, n - i - 1) % modulus
+        hash_value = (hash_value + ord(char) * power_of_base) % modulus
+    return hash_value
+
+def rabin_karp_search(main_string, substring):
+    # Довжини основного рядка та підрядка пошуку
+    substring_length = len(substring)
+    main_string_length = len(main_string)
+
+    # Базове число для хешування та модуль
+    base = 256
+    modulus = 101
+
+    # Хеш-значення для підрядка пошуку та поточного відрізка в основному рядку
+    substring_hash = polynomial_hash(substring, base, modulus)
+    current_slice_hash = polynomial_hash(main_string[:substring_length], base, modulus)
+
+    # Попереднє значення для перерахунку хешу
+    h_multiplier = pow(base, substring_length - 1) % modulus
+
+    # Проходимо крізь основний рядок
+    for i in range(main_string_length - substring_length + 1):
+        if substring_hash == current_slice_hash:
+            if main_string[i:i+substring_length] == substring:
+                return i
+
+        if i < main_string_length - substring_length:
+            current_slice_hash = (current_slice_hash - ord(main_string[i]) * h_multiplier) % modulus
+            current_slice_hash = (current_slice_hash * base + ord(main_string[i + substring_length])) % modulus
+            if current_slice_hash < 0:
+                current_slice_hash += modulus
+
+    return -1
+
+main_string = "Being a developer is not easy"
+substring = "developer"
+
+position = rabin_karp_search(main_string, substring)
+if position != -1:
+    print(f"Substring found at index {position}")
+else:
+    print("Substring not found")
