@@ -65,35 +65,6 @@ binary_search(sorted_array, target_value)
 
 """Завдання 3"""
 
-def naive_search(main_string, pattern):
-    M = len(pattern)
-    N = len(main_string)
-
-    # Перебір по символах головного рядка
-    for i in range(N - M + 1):
-        j = 0
-
-        # Перебір по символах підрядка
-        while j < M:
-            if main_string[i + j] != pattern[j]:
-                break
-            j += 1
-
-        # Якщо значення j дорівнює довжині підрядка, то підрядок знайдено
-        if j == M:
-            return i
-
-    return -1
-
-main_string = "ABABDABACDABABCABAB"
-pattern = "ABABCABAB"
-position = naive_search(main_string, pattern)
-
-if position != -1:
-    print(f"Підрядок знайдено на позиції {position}")
-else:
-    print("Підрядок не знайдено в головному рядку.")
-
 def compute_lps(pattern):
     lps = [0] * len(pattern)
     length = 0
@@ -135,12 +106,6 @@ def kmp_search(main_string, pattern):
 
     return -1  # якщо підрядок не знайдено
 
-raw = "Цей алгоритм часто використовується в текстових редакторах та системах пошуку для ефективного знаходження підрядка в тексті."
-
-pattern = "алг"
-
-print(kmp_search(raw, pattern))
-
 def build_shift_table(pattern):
     """Створити таблицю зсувів для алгоритму Боєра-Мура."""
     table = {}
@@ -175,15 +140,6 @@ def boyer_moore_search(text, pattern):
 
     # Якщо підрядок не знайдено, повертаємо -1
     return -1
-
-text = "Being a developer is not easy"
-pattern = "developer"
-
-position = boyer_moore_search(text, pattern)
-if position != -1:
-    print(f"Substring found at index {position}")
-else:
-    print("Substring not found")
 
 def polynomial_hash(s, base=256, modulus=101):
     """
@@ -226,11 +182,41 @@ def rabin_karp_search(main_string, substring):
 
     return -1
 
-main_string = "Being a developer is not easy"
-substring = "developer"
+def read_file(file_path):
+    with open(file_path, 'r', encoding='cp1251') as file:
+        return file.read()
 
-position = rabin_karp_search(main_string, substring)
-if position != -1:
-    print(f"Substring found at index {position}")
-else:
-    print("Substring not found")
+
+def measure_search_time(func, text, pattern):
+    setup_code = f'''
+from __main__ import {func.__name__}
+'''
+    stmt = f"{func.__name__}(text, pattern)"
+    return timeit.timeit(stmt, setup=setup_code, globals={'text': text, 'pattern': pattern}, number=1)
+
+import timeit
+
+text1 = (read_file("article1.txt"), "article1.txt")
+text2 = (read_file("article2.txt"), "article2.txt")
+
+# Визначення підрядків для пошуку
+existing_substring = "Література" # Рядок який є в двох статтях
+fake_substring = "Двійковий або логарифмічний пошук часто використовується через швидкий час пошуку."
+
+if __name__ == '__main__':
+
+    # Вимірювання часу виконання
+    results = []
+    for text in [text1, text2]:
+        for pattern in [existing_substring, fake_substring]:
+            for search_func in [boyer_moore_search, kmp_search, rabin_karp_search]:
+                time = measure_search_time(search_func, text[0], pattern)
+                results.append((text[1], search_func.__name__, pattern, time))
+
+    # Виведення результатів у вигляді таблиці
+    print(f"{'Стаття':<30} | {'Алгоритм':<30} | {'Підрядок':<20} | {'Час (секунди)':<15}")
+    print('-' * 70)
+    for result in results:
+        print(f"{result[0]:<30}, {result[1]:<30} | {result[2]:<20} | {result[3]:<15.5f}")
+
+"""На основі аналізу отриманих даних, алгоритм Рабіна-Карпа показав найкращі результати швидкості виконання при пошуку існуючого підрядка у обох статтях, що може свідчити про його високу ефективність для текстів даного типу. Однак, при пошуку вигаданого підрядка, алгоритм Боєра-Мура виявився швидшим, особливо у випадку зі статтею 2, що може бути пов'язано з особливостями алгоритму обробки "невдалих" пошуків. Алгоритм Кнута-Морріса-Пратта показав середні результати в обох випадках, забезпечуючи стабільну продуктивність незалежно від наявності підрядка в тексті."""
